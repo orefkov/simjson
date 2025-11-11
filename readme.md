@@ -1,4 +1,6 @@
 # simjson - простейшая библиотека для работы с JSON
+[![CMake on multiple platforms](https://github.com/orefkov/simjson/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/orefkov/simjson/actions/workflows/cmake-multi-platform.yml)
+
 Предназначена для работы с JSON при использовании библиотеки [simstr](https://github.com/orefkov/simstr).
 
 Версия 1.0.
