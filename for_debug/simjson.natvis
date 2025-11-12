@@ -7,8 +7,8 @@
     <DisplayString Condition="type_==Json::Type::Text">text: {val_.text}</DisplayString>
     <DisplayString Condition="type_==Json::Type::Integer">int: {val_.integer}</DisplayString>
     <DisplayString Condition="type_==Json::Type::Real">real: {val_.real}</DisplayString>
-    <DisplayString Condition="type_==Json::Type::Object">obj: {*val_.object}</DisplayString>
-    <DisplayString Condition="type_==Json::Type::Array">arr: {*val_.array}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Object">obj: {val_.object}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Array">arr: {val_.array}</DisplayString>
     <DisplayString>[undefined]</DisplayString>
 	<Expand>
 		<ExpandedItem Condition="type_==Json::Type::Object">*val_.object</ExpandedItem>

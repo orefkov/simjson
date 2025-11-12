@@ -14,15 +14,19 @@
 для массивов - `std::vector<JsonValueTemp<K>>`, строки хранятся в `sstring<K>`.
 
 ## Основные возможности библиотеки
+- Работает со всеми строками simstr.
 - Поддерживает работу со строками `char`, `char16_t`, `char32_t`, `wchar_t`.
 - Удобное создание, чтение и модификация json значений.
+- Копирование таких JSON-значений, как массивы и объекты производится по ссылке (копируется только `shared_ptr`).
+- Возможно "глубокое" копирование aka клонирование, JSON-значений, в этом случае для массивов и объектов создаётся полная копия.
+- "Слияние" одного JSON объекта с другим, с возможностью задать приоритет.
 - Расширенная работа с числами - позволяет использовать int64_t и double.
 - Парсинг строки в Json, с поддержкой порционного парсинга.
 - Сериализация json в строку, с опциями - сортировка ключей, "читаемый" вывод, количество отступов и символ
   отступа при "читаемом" выводе.
 
 ## Основные объекты библиотеки
-- JsonValueTemp<K> - тип Json значения, параметр К задаёт тип используемых символов в строке. Алиасы:
+- JsonValueTempl<K> - тип Json значения, параметр К задаёт тип используемых символов в строке. Алиасы:
   - JsonValue - для строк char
   - JsonValueU - для строк char16_t
   - JsonValueUU - для строк char32_t
@@ -36,9 +40,10 @@
 можно просто включить файлы в свой проект. Для сборки также требуется [simstr](https://github.com/orefkov/simstr) (при использовании CMake
 скачивается автоматически).
 
-Для работы `simjson` требуется компилятор стандарта не ниже С++20, как того требует simstr.
+Для работы `simjson` требуется компилятор с поддержкой стандарта не ниже С++20 (используются концепты).
 
 ## Примеры использования
+### Создание, чтение
 ```cpp
     // Простой json, равный 1.
     JsonValue json = 1; // int64
@@ -74,8 +79,7 @@
       "not specified work dir");
 ```
 
-Задание дефолтных значений, чтение из файла и объединение с дефолтными значениями.
-
+### Пример: Задание дефолтных значений, чтение из файла и объединение с дефолтными значениями.
 ```cpp
 
 JsonValue json_config = {
@@ -133,6 +137,46 @@ void read_config_from_file(ssa folder, ssa file_name) {
     }
     json_config["runtime"_h]["location"_h]["base_dir"_h] = std::move(path_checked);
 }
+```
+### Пример - инициализация из стандартных контейнеров
+```cpp
+    // Массивы
+    std::vector<int> vals = {1, 2, 3, 4};
+    JsonValue json = vals;
+    EXPECT_EQ(json.type(), Json::Array);
+    EXPECT_EQ(json.store(), "[1,2,3,4]");
+
+    JsonValue json1 = std::array<int, 4>{4, 3, 2, 1};
+    EXPECT_EQ(json1.type(), Json::Array);
+    EXPECT_EQ(json1.store(), "[4,3,2,1]");
+
+    std::list<stringa> texts = {"one", "two", "three"};
+    JsonValue json2 = texts;
+    EXPECT_EQ(json2.type(), Json::Array);
+    EXPECT_EQ(json2.store(), "[\"one\",\"two\",\"three\"]");
+
+    // Ключ-значение
+    hashStrMapA<int> vals = {
+        {"one"_h, 1}, {"two"_h, 2}, {"three"_h, 3}, {"four"_h, 4}
+    };
+    JsonValue json = vals;
+    EXPECT_EQ(json.type(), Json::Object);
+    EXPECT_EQ(json.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
+
+    std::map<stringa, int> vals1 = {
+        {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4}
+    };
+    JsonValue json1 = vals1;
+    EXPECT_EQ(json1.type(), Json::Object);
+    EXPECT_EQ(json1.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
+
+    std::vector<std::pair<lstringa<20>, int>> vals2 = {
+        {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4}
+    };
+    JsonValue json2 = vals2;
+    EXPECT_EQ(json2.type(), Json::Object);
+    EXPECT_EQ(json2.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
+
 ```
 
 ## Сгенерированная документация
