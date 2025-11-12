@@ -1,3 +1,9 @@
+/*
+ * (c) Проект "SimJson", Александр Орефков orefkov@gmail.com
+ * ver. 1.0
+ * Классы для работы с JSON
+ */
+
 #pragma once
 #include <memory>
 #include <optional>
@@ -6,6 +12,27 @@
 #include <cassert>
 #include <type_traits>
 #include <utility>
+
+#pragma once
+#ifndef __has_declspec_attribute
+#define __has_declspec_attribute(x) 0
+#endif
+
+#ifdef SIMJSON_IN_SHARED
+    #if defined(_MSC_VER) || (defined(__clang__) && __has_declspec_attribute(dllexport))
+        #ifdef SIMJSON_EXPORT
+            #define SIMJSON_API __declspec(dllexport)
+        #else
+            #define SIMJSON_API __declspec(dllimport)
+        #endif
+    #elif (defined(__GNUC__) || defined(__GNUG__)) && defined(SIMSTR_EXPORT)
+        #define SIMJSON_API __attribute__((visibility("default")))
+    #else
+        #define SIMJSON_API
+    #endif
+#else
+    #define SIMJSON_API
+#endif
 
 namespace simjson {
 using namespace simstr;
@@ -93,7 +120,6 @@ concept JsonObjectSource = requires(const T& t) {
 template<typename K>
 class JsonValueTempl : public Json {
 public:
-
     using strType = sstring<K>;
     using ssType = simple_str<K>;
 
@@ -106,7 +132,7 @@ public:
     /// Создает пустой объект с типом Undefined
     JsonValueTempl() : type_(Undefined) {}
     /// Конструктор копирования. Объекты и массивы копируются по ссылке
-    JsonValueTempl(const JsonValueTempl& other);
+    SIMJSON_API JsonValueTempl(const JsonValueTempl& other);
     /// Конструктор перемещения
     JsonValueTempl(JsonValueTempl&& other) noexcept {
         type_ = other.type_;
@@ -126,7 +152,7 @@ public:
         other.type_ = Undefined;
     }
     /// Деструктор
-    ~JsonValueTempl();
+    SIMJSON_API ~JsonValueTempl();
 
     /// Конструктор из int8_t
     JsonValueTempl(int8_t v) : type_(Integer) { val_.integer = v; }
@@ -172,7 +198,7 @@ public:
         new (&val_.array) json_array(std::make_shared<arr_type>());
     }
     /// Конструктор для создания дефолтного значения с типом type
-    JsonValueTempl(Type type);
+    SIMJSON_API JsonValueTempl(Type type);
 
     struct KeyInit : std::pair<const jt::KeyType<K>, json_value> {
         using base = std::pair<const jt::KeyType<K>, json_value>;
@@ -213,7 +239,7 @@ public:
         const json_value& from;
     };
     /// Конструктор клонирования. В этом случае для объектов и массивов создаются "глубокие" копии
-    JsonValueTempl(const Clone& clone);
+    SIMJSON_API JsonValueTempl(const Clone& clone);
     /// Получить тип значения
     Type type() const { return type_; }
     /// Клонировать значение
@@ -262,7 +288,7 @@ public:
         throw Exc(std::forward<Args>(args)...);
     }
     /// Получить значение, конвертированное в boolean. Логика работы как в javascript `!!val`. Пример: bool val = json.to_boolean();
-    bool to_boolean() const;
+    SIMJSON_API bool to_boolean() const;
 
     // ---------------------------------------- Integer -------------------------------------
     /// Получить значение как integer. В отладочной версии проверяется, что значение действительно integer
@@ -288,7 +314,7 @@ public:
     /// Получить значение, конвертированное в integer, или ничего. Логика работы как в javascript `1 * val`.
     /// Если в результате NaN или Inf, то ничего. Нецелые числа - переводятся в целое.
     /// Пример: int val = json.to_integer().value_or(10);
-    std::optional<int64_t> to_integer() const;
+    SIMJSON_API std::optional<int64_t> to_integer() const;
     /// Получить значение из to_integer, если оно есть, или выкинуть исключение.
     template<typename Exc, typename ... Args> requires (std::is_constructible_v<Exc, Args...>)
     int64_t to_integer_or_throw(Args&&...args) const {
@@ -320,7 +346,7 @@ public:
     }
 
     /// Получить значение, конвертированное в double. Логика работы как в javascript `1 * val`. Для "не чисел" возвращает NaN.
-    double to_real() const;
+    SIMJSON_API double to_real() const;
     // --------------------------------------- Number -----------------------------
     // В нашей реализации в отличии от чистого json числа могут быть int64_t или double
     // Поэтому добавим ещё логику для работы только с обоими вариантами чисел
@@ -336,7 +362,7 @@ public:
         throw Exc(std::forward<Args>(args)...);
     }
     /// Возвращает double, если хранится double или int64_t, либо ничего
-    std::optional<double> number_real() const;
+    SIMJSON_API std::optional<double> number_real() const;
     /// Получить double, если хранится double или int64_t, либо выбросить исключение
     template<typename Exc, typename ... Args> requires (std::is_constructible_v<Exc, Args...>)
     double number_real_or_throw(Args&&...args) const {
@@ -379,7 +405,7 @@ public:
     }
 
     /// Получить значение, конвертированное в текст. Логика работы как в javascript `"" + val`.
-    strType to_text() const;
+    SIMJSON_API strType to_text() const;
 
     /// Получить значение как json Object. В отладочной версии проверяется, что значение действительно Object
     json_object& as_object() {
@@ -552,7 +578,7 @@ public:
      *      Если оба JSONа объекты - то сливаются по ключам. Ключи из другого объекта, которых нет в текущем - добавятся в текущий
      *      объект. Которые есть - при replace == true будут заменены.
      */
-    void merge(const json_value& other, bool replace = true, bool append_arrays = false);
+    SIMJSON_API void merge(const json_value& other, bool replace = true, bool append_arrays = false);
     /*!
      * @brief Распарсить текст с json.
      * 
@@ -574,7 +600,7 @@ public:
      * @param indent_symbol - при "украшении" задаёт символ для отступов, по умолчанию пробел.
      * @param indent_count - количество символов отступа на один уровень, по умолчанию 2.
      */
-    void store(lstring<K, 0, true>& stream, bool prettify = false, bool order_keys = false, K indent_symbol = ' ', unsigned indent_count = 2) const;
+    SIMJSON_API void store(lstring<K, 0, true>& stream, bool prettify = false, bool order_keys = false, K indent_symbol = ' ', unsigned indent_count = 2) const;
     /*!
      * @brief Сериализовать json-значение в строку
      * @param prettify - "украшать", в случае true в строке будут добавляться переносы строк и отступы.
@@ -593,8 +619,8 @@ public:
     }
 
 protected:
-    // Один объект "пустышка"
-    static const json_value UNDEFINED;
+    SIMJSON_API static const json_value UNDEFINED;
+
     // Тип значения
     Type type_;
     // Хранимое значение
@@ -648,7 +674,7 @@ struct StreamedJsonParser : StreamedJsonParserBase {
 protected:
 
     template<bool All, bool Last>
-    JsonParseResult process(ssType chunk);
+    SIMJSON_API JsonParseResult process(ssType chunk);
 
     static bool isWhiteSpace(K symbol) {
         return symbol == ' ' || symbol == '\t' || symbol == '\n' || symbol == '\r';
@@ -688,14 +714,17 @@ using JsonValueU = JsonValueTempl<u16s>;
 using JsonValueUU = JsonValueTempl<u32s>;
 
 /// Один объект "пустышка"
+#if defined (SIMJSON_EXPORT) || !defined (SIMJSON_IN_SHARED)
 template<typename K>
-inline const JsonValueTempl<K> JsonValueTempl<K>::UNDEFINED;
+inline SIMJSON_API const JsonValueTempl<K> JsonValueTempl<K>::UNDEFINED;
+#else
+#endif
 
 /*!
  * @brief Прочитать файл в строку
  * @param filePath
  * @return stringa
  */
-stringa get_file_content(stra filePath);
+SIMJSON_API stringa get_file_content(stra filePath);
 
 } // namespace simjson

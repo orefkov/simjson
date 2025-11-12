@@ -1,4 +1,10 @@
-#include <simjson/json.h>
+/*
+ * (c) Проект "SimJson", Александр Орефков orefkov@gmail.com
+ * ver. 1.0
+ * Классы для работы с JSON
+ */
+
+ #include <simjson/json.h>
 #include <cmath>
 #include <algorithm>
 #include <fstream>
@@ -111,7 +117,7 @@ struct expr_json_str {
 };
 
 template<typename K>
-JsonValueTempl<K>::JsonValueTempl(const JsonValueTempl& other) : type_(other.type_) {
+SIMJSON_API JsonValueTempl<K>::JsonValueTempl(const JsonValueTempl& other) : type_(other.type_) {
     switch (type_) {
     case Boolean:
         val_.boolean = other.val_.boolean;
@@ -137,7 +143,7 @@ JsonValueTempl<K>::JsonValueTempl(const JsonValueTempl& other) : type_(other.typ
 }
 
 template<typename K>
-JsonValueTempl<K>::~JsonValueTempl() {
+SIMJSON_API JsonValueTempl<K>::~JsonValueTempl() {
     switch (type_) {
     case Text:
         as_text().~strType();
@@ -154,7 +160,7 @@ JsonValueTempl<K>::~JsonValueTempl() {
 }
 
 template<typename K>
-JsonValueTempl<K>::JsonValueTempl(Type type) : type_(type) {
+SIMJSON_API JsonValueTempl<K>::JsonValueTempl(Type type) : type_(type) {
     switch (type_) {
     case Boolean:
         val_.boolean = false;
@@ -180,7 +186,7 @@ JsonValueTempl<K>::JsonValueTempl(Type type) : type_(type) {
 }
 
 template<typename K>
-JsonValueTempl<K>::JsonValueTempl(const Clone& clone) : type_(clone.from.type_) {
+SIMJSON_API JsonValueTempl<K>::JsonValueTempl(const Clone& clone) : type_(clone.from.type_) {
     const json_value& other = clone.from;
     switch (type_) {
     case Boolean:
@@ -207,7 +213,7 @@ JsonValueTempl<K>::JsonValueTempl(const Clone& clone) : type_(clone.from.type_) 
 }
 
 template<typename K>
-bool JsonValueTempl<K>::to_boolean() const {
+SIMJSON_API bool JsonValueTempl<K>::to_boolean() const {
     switch (type_) {
         case Boolean:
             return val_.boolean;
@@ -235,7 +241,7 @@ inline static bool is_double_int64(double dbl) {
 }
 
 template<typename K>
-std::optional<int64_t> JsonValueTempl<K>::to_integer() const {
+SIMJSON_API std::optional<int64_t> JsonValueTempl<K>::to_integer() const {
     switch (type_) {
     case Boolean:
         return val_.boolean ? 1 : 0;
@@ -282,7 +288,7 @@ std::optional<int64_t> JsonValueTempl<K>::to_integer() const {
 }
 
 template<typename K>
-double JsonValueTempl<K>::to_real() const {
+SIMJSON_API double JsonValueTempl<K>::to_real() const {
     switch (type_) {
     case Json::Boolean:
         return val_.boolean ? 1.0 : 0.0;
@@ -313,7 +319,7 @@ std::optional<int64_t> JsonValueTempl<K>::number_int() const {
 }
 
 template<typename K>
-std::optional<double> JsonValueTempl<K>::number_real() const {
+SIMJSON_API std::optional<double> JsonValueTempl<K>::number_real() const {
     if (type_ == Real) {
         return val_.real;
     }
@@ -324,7 +330,7 @@ std::optional<double> JsonValueTempl<K>::number_real() const {
 }
 
 template<typename K>
-typename JsonValueTempl<K>::strType JsonValueTempl<K>::to_text() const {
+SIMJSON_API typename JsonValueTempl<K>::strType JsonValueTempl<K>::to_text() const {
     switch (type_) {
     case Undefined:
         return uni_string(K, "undefined");
@@ -369,7 +375,7 @@ typename JsonValueTempl<K>::strType JsonValueTempl<K>::to_text() const {
 }
 
 template<typename K>
-void JsonValueTempl<K>::merge(const json_value& other, bool replace, bool append_arrays) {
+SIMJSON_API void JsonValueTempl<K>::merge(const json_value& other, bool replace, bool append_arrays) {
     if (is_object() && other.is_object()) {
         // Надо слить по ключам
         auto& self = *as_object();
@@ -487,7 +493,7 @@ struct json_store {
 };
 
 template<typename K>
-void JsonValueTempl<K>::store(lstring<K, 0, true>& stream, bool prettify, bool order_keys, K indent_symbol, unsigned indent_count) const {
+SIMJSON_API void JsonValueTempl<K>::store(lstring<K, 0, true>& stream, bool prettify, bool order_keys, K indent_symbol, unsigned indent_count) const {
     json_store<K>{stream, prettify, order_keys, indent_symbol, indent_count}.store(*this, indent_count);
 }
 
@@ -572,7 +578,7 @@ inline static const char START_SYMBOLS[] = {
 
 template<typename K>
 template<bool All, bool Last>
-JsonParseResult StreamedJsonParser<K>::process(ssType chunk) {
+SIMJSON_API JsonParseResult StreamedJsonParser<K>::process(ssType chunk) {
     ptr_ = chunk.begin();
     const K* end = chunk.end();
     JsonValueTempl<K>* current = stack_.empty() ? nullptr : stack_.back();

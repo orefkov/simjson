@@ -22,8 +22,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
 endif()
 
 option(SIMJSON_BUILD_TESTS "Построить тесты" ON)
-option(SIMJSON_BENCHMARKS "Построить замеры производительности" OFF)
-option(SIMJSON_SHARED "Функции simjson должны экспортироваться или импортироваться" OFF)
+option(SIMJSON_IN_SHARED "Функции simjson должны экспортироваться или импортироваться" Off)
 
 add_library(simjson_simjson
     src/json.cpp
@@ -53,10 +52,10 @@ set_target_properties(
     OUTPUT_NAME simjson
 )
 
-function(Simstr)
+function(add_simstr)
     set(SIMSTR_BUILD_TESTS OFF)
     set(SIMSTR_BENCHMARKS OFF)
-    if(SIMJSON_SHARED)
+    if(SIMJSON_IN_SHARED)
         set(SIMSTR_SHARED On)
     endif()
     FetchContent_Declare(
@@ -69,14 +68,14 @@ function(Simstr)
     FetchContent_MakeAvailable(simstr)
 endfunction()
 
-Simstr()
+add_simstr()
 
 target_link_libraries(simjson_simjson PUBLIC simstr::simstr)
 
-if(SIMJSON_SHARED)
-    add_compile_definitions(SIMJSON_SHARED)
+if(SIMJSON_IN_SHARED)
+    add_compile_definitions(SIMJSON_IN_SHARED)
     target_compile_definitions(simjson_simjson PRIVATE SIMJSON_EXPORT)
-endif(SIMJSON_SHARED)
+endif(SIMJSON_IN_SHARED)
 
 if(SIMJSON_BUILD_TESTS)
     enable_testing()
@@ -86,38 +85,24 @@ if(SIMJSON_BUILD_TESTS)
         googletest
         # Specify the commit you depend on and update it regularly.
         URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
+        FIND_PACKAGE_ARGS NAMES GTest
     )
-
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt FALSE CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
     add_subdirectory(tests)
 endif()
 
-function(GBencmark)
-    # Load and build Google benchmarks
-    include(FetchContent)
-    FetchContent_Declare(
-        googlebench
-        # Specify the commit you depend on and update it regularly.
-        URL https://github.com/google/benchmark/archive/refs/tags/v1.7.0.zip
-    )
-    set(CMAKE_CXX_STANDARD 20)
-    set(BENCHMARK_ENABLE_TESTING OFF)
-    set(BENCHMARK_ENABLE_LTO OFF)
-    set(BENCHMARK_ENABLE_INSTALL OFF)
-    set(BENCHMARK_INSTALL_DOCS OFF)
-    set(BENCHMARK_DOWNLOAD_DEPENDENCIES ON)
-    set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
-    add_compile_definitions(BENCHMARK_STATIC_DEFINE)
-    FetchContent_MakeAvailable(googlebench)
-endfunction()
-
-if(SIMJSON_BENCHMARKS) # AND CMAKE_BUILD_TYPE STREQUAL Release)
-    set(BUILD_BENCHMARKS ON)
-    GBencmark()
-    add_subdirectory(bench)
+#[[
+# Пример построения shared библиотеки, которая включит в себя simjson и simstr.
+# Необходимо также задать опцию SIMJSON_IN_SHARED. Как при этом создать экзешник,
+# пользующийся этой dll - пример в tests/CMakeLists.txt
+if (SIMJSON_IN_SHARED)
+    add_library(simjson_dll SHARED include/simjson/json.h)
+    target_link_libraries(simjson_dll PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,simjson::simjson>,simstr_simstr>")
+    set_property(TARGET simjson_dll PROPERTY LINK_LIBRARY_OVERRIDE "WHOLE_ARCHIVE,simstr_simstr")
 endif()
+#]]
 
 # ---- Install rules ----
 
