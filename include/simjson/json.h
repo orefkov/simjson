@@ -414,8 +414,13 @@ public:
         swap(t);
         return *this;
     }
-
-    /// Обращение к свойству константного объекта по ключу. Не создаёт новую пару при отсутствии ключа
+    /*!
+     * @brief Обращение к свойству константного объекта по ключу.
+     * @tparam T - типа ключа
+     * @param key - ключ
+     * @return const json_value& - ссылка на значение ключа.
+     *   Если значение не объект, или ключа нет, не создаёт новую пару, а возвращает ссылку на UNDEFINED.
+     */
     template<jt::JsonKeyType<K> T>
     const json_value& at(T&& key) const {
         if (type_ == Object) {
@@ -424,14 +429,28 @@ public:
         }
         return UNDEFINED;
     }
-
-    /// Обращение к свойству константного объекта по ключу. Не создаёт новую пару при отсутствии ключа
+    /*!
+     * @brief Обращение к свойству константного объекта по ключу.
+     * @tparam T - типа ключа
+     * @param key - ключ
+     * @return const json_value& - ссылка на значение ключа.
+     *   Если значение не объект, или ключа нет, не создаёт новую пару, а возвращает ссылку на UNDEFINED.
+     */
     template<jt::JsonKeyType<K> T>
     const json_value& operator[](T&& key) const {
         return at(std::forward<T>(key));
     }
-
-    /// Обращение к свойству константного объекта по ключам. Не создаёт новую пару при отсутствии ключа
+    /*!
+     * @brief Обращение к свойству константного объекта по набору ключей.
+     * @details Функция последовательно переходит от значения к значению по заданным ключам.
+     *  Как только указанный ключ не будет найден, перебор останавливается.
+     *  Например: config("a", "b", "c") для объекта {"a": {"b": {"c": 10}}} вернёт ссылку на 10.
+     * @tparam T - типа ключа
+     * @param key - ключ
+     * @param ...args - остальные ключи
+     * @return const json_value& - ссылка на значение ключа.
+     *   Если значение не объект, или указанного ключа нет, не создаёт новую пару, а возвращает ссылку на UNDEFINED.
+     */
     template<jt::JsonKeyType<K> T, typename...Args>
     const json_value& operator()(T&& key, Args&&...args) const {
         const json_value& res = at(std::forward<T>(key));
@@ -441,9 +460,14 @@ public:
             return res.is_undefined() ? res : res(std::forward<Args>(args)...);
         }
     }
-
-    /// Обращение к свойству объекта по ключу. Создаёт новую пару при отсутствии ключа
-    /// Если значение не объект, заменят его на объект
+    /*!
+     * @brief Обращение к свойству объекта по ключу.
+     * @tparam T - тип ключа
+     * @param key - ключ
+     * @return json_value& - ссылку на значение ключа.
+     * @details Если значение не json-объект, то "превращает" его в json-объект.
+     *  Если указанного ключа нет - добавляет в json-объект этот ключ с пустым значением.
+     */
     template<jt::JsonKeyType<K> T>
     json_value& operator[](T&& key) {
         if (type_ != Object) {
@@ -452,9 +476,17 @@ public:
         }
         return as_object()->try_emplace(std::forward<T>(key)).first->second;
     }
-
-    /// Установка значения свойству объекта по ключу. Создаёт новую пару при отсутствии ключа
-    /// Если значение не объект, заменят его на объект
+    /*!
+     * @brief Установка значения свойству json-объекта по ключу.
+     * @tparam Key - тип ключа
+     * @tparam Args - типы аргументов для создания json-значения по указанному ключу
+     * @param key  - ключ
+     * @param args - аргументы  для создания json-значения по указанному ключу
+     * @return json_value& - ссылку на json-значение по указанному ключу
+     * @details Если значение не json-объект, то "превращает" его в json-объект.
+     *  Если указанного ключа нет - добавляет в json-объект этот ключ с заданными аргументами,
+     *  иначе присваивает ему аргументы.
+     */
     template<jt::JsonKeyType<K> Key, typename ... Args>
     json_value& set(Key&& key, Args&& ... args) {
         if (type_ != Object) {
@@ -463,8 +495,7 @@ public:
         }
         return as_object()->emplace(std::forward<Key>(key), std::forward<Args>(args)...).first->second;
     }
-
-    /// Обращение к элементу константного массива по индексу.
+    /// Обращение к элементу константного массива по индексу. Если это не json-массив или индекс за границами массива - возвращает ссылку на UNDEFINED.
     const json_value& at(size_t idx) const {
         if (type_ == Array) {
             const auto& arr = *as_array();
@@ -474,15 +505,19 @@ public:
         }
         return UNDEFINED;
     }
-    /// Обращение к элементу константного массива по индексу.
+    /// Обращение к элементу константного массива по индексу. Если это не json-массив или индекс за границами массива - возвращает ссылку на UNDEFINED.
     const json_value& operator[](size_t idx) const {
         return at(idx);
     }
-
-    /// Обращение к элементу массива по индексу.
-    /// Если значение не массив - заменяется на массив.
-    /// Если индекс больше длины массива - увеличивает массив до заданного индекса
-    /// Если индекс == -1 - добавляет в массив ещё один элемент
+    /*!
+     * @brief Обращение к элементу массива по индексу.
+     * 
+     * @param idx - индекс элемента
+     * @return json_value& - ссылку на указанный элемент массива.
+     * @details Если это значение не json-массив - "превращает" его в массив.
+     *      Если индекс == -1 - добавляет в массив ещё один элемент.
+     *      Если индекс больше длины массива - увеличивает массив до заданного индекса.
+     */
     json_value& operator[](size_t idx) {
         if (type_ != Array) {
             assert(this != &UNDEFINED);
@@ -497,7 +532,7 @@ public:
         }
         return arr[idx];
     }
-    /// Количество элементов массива или ключей объекта
+    /// Количество элементов json-массива или ключей json-объекта
     size_t size() const {
         if (type_ == Array) {
             return as_array()->size();
@@ -506,24 +541,51 @@ public:
         }
         return 0;
     }
-
-    /// Слияние с другим JSON. Если replace == true, то другой JSON имеет приоритет, если он не undefined.
-    /// Если оба объекта массивы, то при append_arrays = true другой массив дописывается к этому массиву.
-    /// Если оба JSONа объекты - то сливаются по ключам.
-    /// Иначе другой JSON заменяет текущее значение.
+    /*!
+     * @brief Слияние с другим JSON.
+     * @param other - другое json-значение
+     * @param replace - заменять другим при слиянии.
+     * @param append_arrays - при слиянии json-массивов объединять их.
+     * @details Если replace == true, то другой JSON имеет приоритет и для простых типов, если он не undefined, он заменит текущий.
+     *      Если оба объекта json-массивы, то при append_arrays = true другой массив дописывается к этому массиву,
+     *      иначе если replace == true, то заменит текущий массив.
+     *      Если оба JSONа объекты - то сливаются по ключам. Ключи из другого объекта, которых нет в текущем - добавятся в текущий
+     *      объект. Которые есть - при replace == true будут заменены.
+     */
     void merge(const json_value& other, bool replace = true, bool append_arrays = false);
-
-    /// Распарсить текст с json.
+    /*!
+     * @brief Распарсить текст с json.
+     * 
+     * @param jsonString - строка текста, которую надо распарсить.
+     * @return std::tuple<json_value, JsonParseResult, unsigned, unsigned> - tuple, содержащую:
+     *  json_value - получившееся значение, если парсинг успешный, или UNDEFINED, в случае ошибок;
+     *  JsonParseResult - код ошибки парсинга, Success в случае успеха;
+     *  unsigned line, unsigned col - в случае ошибки это номера строки/колонки возникновения ошибки.
+     */
     static std::tuple<json_value, JsonParseResult, unsigned, unsigned> parse(ssType jsonString);
-
-    /// Сериализовать значение в lstring<K, 0>. При prettify == true - добавляет переносы строк
-    /// и отступы в указанное количество указанных символов, по умолчанию - два пробела.
-    /// При order_keys == true - сортирует ключи объектов по их имени
+    /*!
+     * @brief Сериализовать json-значение в строку
+     * @param stream - строка, в которую сохранять
+     * @param prettify - "украшать", в случае true в строке будут добавляться переносы строк и отступы.
+     * @param order_keys - упорядочить ключи json-объектов. По стандарту порядок ключей в JSON не задаётся и не влияет
+     *          на валидность, однако часто требуется для повторяемости результатов придерживаться одного и того же
+     *          порядка вывода при разных запусках. В этом случае вывод ключей будет осуществляться упорядоченно
+     *          "побайтовым сравнением".
+     * @param indent_symbol - при "украшении" задаёт символ для отступов, по умолчанию пробел.
+     * @param indent_count - количество символов отступа на один уровень, по умолчанию 2.
+     */
     void store(lstring<K, 0, true>& stream, bool prettify = false, bool order_keys = false, K indent_symbol = ' ', unsigned indent_count = 2) const;
-
-    /// Сериализовать значение в lstring<K, 0>. При prettify == true - добавляет переносы строк
-    /// и отступы в указанное количество указанных символов, по умолчанию - два пробела.
-    /// При order_keys == true - сортирует ключи объектов по их имени
+    /*!
+     * @brief Сериализовать json-значение в строку
+     * @param prettify - "украшать", в случае true в строке будут добавляться переносы строк и отступы.
+     * @param order_keys - упорядочить ключи json-объектов. По стандарту порядок ключей в JSON не задаётся и не влияет
+     *          на валидность, однако часто требуется для повторяемости результатов придерживаться одного и того же
+     *          порядка вывода при разных запусках. В этом случае вывод ключей будет осуществляться упорядоченно
+     *          "побайтовым сравнением".
+     * @param indent_symbol - при "украшении" задаёт символ для отступов, по умолчанию пробел.
+     * @param indent_count - количество символов отступа на один уровень, по умолчанию 2.
+     * @return строку с JSON.
+     */
     lstring<K, 0, true> store(bool prettify = false, bool order_keys = false, K indent_symbol = ' ', unsigned indent_count = 2) const {
         lstring<K, 0, true> res;
         store(res, prettify, order_keys, indent_symbol, indent_count);
@@ -616,14 +678,19 @@ std::tuple<JsonValueTempl<K>, JsonParseResult, unsigned, unsigned> JsonValueTemp
     return {std::move(parser.result_), res, parser.line_, parser.col_};
 }
 
+/// Алиас для JsonValue с символами u8s
 using JsonValue = JsonValueTempl<u8s>;
+/// Алиас для JsonValue с символами uws
 using JsonValueW = JsonValueTempl<uws>;
+/// Алиас для JsonValue с символами u16s
 using JsonValueU = JsonValueTempl<u16s>;
+/// Алиас для JsonValue с символами u32s
 using JsonValueUU = JsonValueTempl<u32s>;
 
-// Один объект "пустышка"
+/// Один объект "пустышка"
 template<typename K>
 inline const JsonValueTempl<K> JsonValueTempl<K>::UNDEFINED;
+
 /*!
  * @brief Прочитать файл в строку
  * @param filePath
