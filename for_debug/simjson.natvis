@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Файл с описанием визуализации simjson для Visual Studio -->
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="simjson::JsonValueTempl&lt;*&gt;">
+    <DisplayString Condition="type_==Json::Type::Null">Null</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Boolean">bool: {val_.boolean}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Text">text: {val_.text}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Integer">int: {val_.integer}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Real">real: {val_.real}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Object">obj: {*val_.object}</DisplayString>
+    <DisplayString Condition="type_==Json::Type::Array">arr: {*val_.array}</DisplayString>
+    <DisplayString>[undefined]</DisplayString>
+	<Expand>
+		<ExpandedItem Condition="type_==Json::Type::Object">*val_.object</ExpandedItem>
+		<ExpandedItem Condition="type_==Json::Type::Array">*val_.array</ExpandedItem>
+	</Expand>
+  </Type>
+</AutoVisualizer>
