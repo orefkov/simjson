@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <array>
 
 namespace simjson::tests {
 
@@ -388,7 +389,45 @@ TEST(SimJson, JsonThrow) {
     EXPECT_EQ(err_descr, "Need boolean value");
 }
 
-/*
+TEST(SimJson, JsonStdInitArray) {
+    std::vector<int> vals = {1, 2, 3, 4};
+    JsonValue json = vals;
+    EXPECT_EQ(json.type(), Json::Array);
+    EXPECT_EQ(json.store(), "[1,2,3,4]");
+
+    JsonValue json1 = std::array<int, 4>{4, 3, 2, 1};
+    EXPECT_EQ(json1.type(), Json::Array);
+    EXPECT_EQ(json1.store(), "[4,3,2,1]");
+
+    std::list<stringa> texts = {"one", "two", "three"};
+    JsonValue json2 = texts;
+    EXPECT_EQ(json2.type(), Json::Array);
+    EXPECT_EQ(json2.store(), "[\"one\",\"two\",\"three\"]");
+}
+
+TEST(SimJson, JsonStdInitMap) {
+    hashStrMapA<int> vals = {
+        {"one"_h, 1}, {"two"_h, 2}, {"three"_h, 3}, {"four"_h, 4}
+    };
+    JsonValue json = vals;
+    EXPECT_EQ(json.type(), Json::Object);
+    EXPECT_EQ(json.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
+
+    std::map<stringa, int> vals1 = {
+        {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4}
+    };
+    JsonValue json1 = vals1;
+    EXPECT_EQ(json1.type(), Json::Object);
+    EXPECT_EQ(json1.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
+
+    std::vector<std::pair<lstringa<20>, int>> vals2 = {
+        {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4}
+    };
+    JsonValue json2 = vals2;
+    EXPECT_EQ(json2.type(), Json::Object);
+    EXPECT_EQ(json2.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
+}
+    /*
 stringa getFileContent(stra fileName) {
     std::ifstream file(fileName, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();

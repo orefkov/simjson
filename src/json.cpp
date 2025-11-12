@@ -369,22 +369,31 @@ typename JsonValueTempl<K>::strType JsonValueTempl<K>::to_text() const {
 }
 
 template<typename K>
-void JsonValueTempl<K>::merge(const json_value& other, bool replace) {
+void JsonValueTempl<K>::merge(const json_value& other, bool replace, bool append_arrays) {
     if (is_object() && other.is_object()) {
         // Надо слить по ключам
         auto& self = *as_object();
         for (const auto& [key, value]: *other.as_object()) {
             auto fnd = self.find(key);
             if (fnd != self.end()) {
-                fnd->second.merge(value, replace);
+                fnd->second.merge(value, replace, append_arrays);
             } else {
                 self.try_emplace(key, value);
             }
         }
     } else if (is_array() && other.is_array()) {
-        if (other.as_array()->size()) {
+        if (append_arrays) {
+            if (other.as_array()->size()) {
+                auto& arr = *as_array();
+                arr.reserve(arr.size() + other.as_array()->size());
+                for (const auto& e : *other.as_array()) {
+                    arr.emplace_back(e);
+                }
+            }
+        } else if (replace) {
             auto& arr = *as_array();
-            arr.reserve(arr.size() + other.as_array()->size());
+            arr.clear();
+            arr.reserve(other.as_array()->size());
             for (const auto& e : *other.as_array()) {
                 arr.emplace_back(e);
             }

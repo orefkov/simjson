@@ -52,6 +52,40 @@ protected:
     int idxUnicode_{};
 };
 
+namespace jt {
+
+template<typename K>
+using KeyType = StoreType<K, strhash<K>>;
+
+template<typename T, typename K>
+concept JsonType = std::is_integral_v<std::remove_cvref_t<T>> ||
+    std::is_floating_point_v<std::remove_cvref_t<T>> ||
+    std::is_constructible_v<sstring<K>, T>;
+
+template<typename T, typename K>
+concept JsonKeyType = std::convertible_to<T, simple_str<K>> ||
+    std::same_as<std::remove_cvref_t<T>, KeyType<K>>;
+
+template<typename T, typename K>
+concept JsonArraySource = requires(const T& t) {
+    { t.empty() } -> std::same_as<bool>;
+    { t.size() } -> std::same_as<size_t>;
+    { *t.begin() } -> JsonType<K>;
+    { *t.end() } -> JsonType<K>;
+};
+
+template<typename T, typename K>
+concept JsonObjectSource = requires(const T& t) {
+    { t.empty() } -> std::same_as<bool>;
+    { t.size() } -> std::same_as<size_t>;
+    { t.begin()->first } -> JsonKeyType<K>;
+    { t.end()->first } -> JsonKeyType<K>;
+    { t.begin()->second } -> JsonType<K>;
+    { t.end()->second } -> JsonType<K>;
+};
+
+} // namespace jt
+
 /*!
  * @brief Класс для представления json значения
  * @tparam K - тип символов
@@ -64,10 +98,10 @@ public:
     using ssType = simple_str<K>;
 
     using json_value = JsonValueTempl<K>;
-    using json_object = std::shared_ptr<hashStrMap<K, JsonValueTempl<K>>>;
-    using json_array = std::shared_ptr<std::vector<JsonValueTempl<K>>>;
-    using obj_type = typename json_object::element_type;
-    using arr_type = typename json_array::element_type;
+    using obj_type = hashStrMap<K, JsonValueTempl<K>>;
+    using arr_type = std::vector<JsonValueTempl<K>>;
+    using json_object = std::shared_ptr<obj_type>;
+    using json_array = std::shared_ptr<arr_type>;
 
     /// Создает пустой объект с типом Undefined
     JsonValueTempl() : type_(Undefined) {}
@@ -75,8 +109,20 @@ public:
     JsonValueTempl(const JsonValueTempl& other);
     /// Конструктор перемещения
     JsonValueTempl(JsonValueTempl&& other) noexcept {
-        // Расчёт на то, что shared_ptr не содержит указателей на свои внутренности
-        memcpy((void*)this, &other, sizeof(*this));
+        type_ = other.type_;
+        switch (other.type_) {
+        case Json::Text:
+            new (&val_.text) strType(std::move(other.val_.text));
+            break;
+        case Json::Object:
+            new (&val_.object) json_object(std::move(other.val_.object));
+            break;
+        case Json::Array:
+            new (&val_.array) json_array(std::move(other.val_.array));
+            break;
+        default:
+            memcpy(&val_, &other.val_, sizeof(val_));
+        }
         other.type_ = Undefined;
     }
     /// Деструктор
@@ -128,20 +174,39 @@ public:
     /// Конструктор для создания дефолтного значения с типом type
     JsonValueTempl(Type type);
 
-    struct KeyInit : std::pair<const StoreType<K>, json_value> {
-        using base = std::pair<const StoreType<K>, json_value>;
-        KeyInit(const StoreType<K>& k, const json_value& v) : base(k, v){}
+    struct KeyInit : std::pair<const jt::KeyType<K>, json_value> {
+        using base = std::pair<const jt::KeyType<K>, json_value>;
+        KeyInit(const jt::KeyType<K>& k, const json_value& v) : base(k, v){}
         KeyInit(ssType k, const json_value& v) : base(obj_type::toStoreType(k), v){}
     };
     using ObjectInit = std::initializer_list<KeyInit>;
     /// Конструктор из инициализатора для создания json::object: JsonValue v = {{"key1"_h, 1}, {"key2", "text"}, {"key3"_h, false}}; -> {"key1": 10, "key2": "text", "key3": false}
     JsonValueTempl(ObjectInit&& init) : type_(Object) {
-        new (&val_.object) json_object(std::make_shared<obj_type>(std::move(reinterpret_cast<std::initializer_list<std::pair<const StoreType<K>, json_value>>&>(init))));
+        new (&val_.object) json_object(std::make_shared<obj_type>(std::move(reinterpret_cast<std::initializer_list<std::pair<const jt::KeyType<K>, json_value>>&>(init))));
     }
     using ArrayInit = std::initializer_list<json_value>;
     /// Конструктор из инициализатора для создания json::array: JsonValue json = {"key1", 12, false, Json::null, 1.25, true}; -> ["key1", 12, false, null, 1.25, true]
     JsonValueTempl(ArrayInit&& init) : type_(Array) {
         new (&val_.array) json_array(std::make_shared<arr_type>(std::move(init)));
+    }
+    /// Конструктор из любого стандартного контейнера-массива, содержащего значения JSON.
+    JsonValueTempl(jt::JsonArraySource<K> auto const& obj) : JsonValueTempl(emptyArray) {
+        if (!obj.empty()) {
+            auto& arr = *as_array();
+            arr.reserve(obj.size());
+            for (const auto& e : obj) {
+                arr.emplace_back(e);
+            }
+        }
+    }
+    /// Конструктор из любого стандартного контейнера с парами, содержащими строковый ключ в first и значение JSON в second.
+    JsonValueTempl(jt::JsonObjectSource<K> auto const& obj) : JsonValueTempl(emptyObject) {
+        if (!obj.empty()) {
+            auto& me = *as_object();
+            for (const auto& [f, s] : obj) {
+                me.emplace(f, s);
+            }
+        }
     }
 
     struct Clone {
@@ -173,7 +238,6 @@ public:
     bool is_array() const { return type_ == Array; }
     /// Значение object
     bool is_object() const { return type_ == Object; }
-
 
     // -----------------------------   Boolean -----------------------------------------------
 
@@ -352,7 +416,7 @@ public:
     }
 
     /// Обращение к свойству константного объекта по ключу. Не создаёт новую пару при отсутствии ключа
-    template<typename T> requires (!std::is_integral_v<T>)
+    template<jt::JsonKeyType<K> T>
     const json_value& at(T&& key) const {
         if (type_ == Object) {
             if (auto it = as_object()->find(std::forward<T>(key)); it != as_object()->end())
@@ -362,13 +426,13 @@ public:
     }
 
     /// Обращение к свойству константного объекта по ключу. Не создаёт новую пару при отсутствии ключа
-    template<typename T> requires (!std::is_integral_v<T>)
+    template<jt::JsonKeyType<K> T>
     const json_value& operator[](T&& key) const {
         return at(std::forward<T>(key));
     }
 
     /// Обращение к свойству константного объекта по ключам. Не создаёт новую пару при отсутствии ключа
-    template<typename T, typename...Args> requires (!std::is_integral_v<T>)
+    template<jt::JsonKeyType<K> T, typename...Args>
     const json_value& operator()(T&& key, Args&&...args) const {
         const json_value& res = at(std::forward<T>(key));
         if constexpr (sizeof...(Args) == 0) {
@@ -380,7 +444,7 @@ public:
 
     /// Обращение к свойству объекта по ключу. Создаёт новую пару при отсутствии ключа
     /// Если значение не объект, заменят его на объект
-    template<typename T> requires (!std::is_integral_v<T>)
+    template<jt::JsonKeyType<K> T>
     json_value& operator[](T&& key) {
         if (type_ != Object) {
             assert(this != &UNDEFINED);
@@ -391,7 +455,7 @@ public:
 
     /// Установка значения свойству объекта по ключу. Создаёт новую пару при отсутствии ключа
     /// Если значение не объект, заменят его на объект
-    template<typename Key, typename ... Args> requires (!std::is_integral_v<Key>)
+    template<jt::JsonKeyType<K> Key, typename ... Args>
     json_value& set(Key&& key, Args&& ... args) {
         if (type_ != Object) {
             assert(this != &UNDEFINED);
@@ -444,10 +508,10 @@ public:
     }
 
     /// Слияние с другим JSON. Если replace == true, то другой JSON имеет приоритет, если он не undefined.
-    /// Если оба объекта массивы, то другой массив дописывается к этому массиву.
+    /// Если оба объекта массивы, то при append_arrays = true другой массив дописывается к этому массиву.
     /// Если оба JSONа объекты - то сливаются по ключам.
     /// Иначе другой JSON заменяет текущее значение.
-    void merge(const json_value& other, bool replace = true);
+    void merge(const json_value& other, bool replace = true, bool append_arrays = false);
 
     /// Распарсить текст с json.
     static std::tuple<json_value, JsonParseResult, unsigned, unsigned> parse(ssType jsonString);

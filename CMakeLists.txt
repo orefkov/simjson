@@ -63,7 +63,7 @@ function(Simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG 04d253e
+        GIT_TAG fb0e2f1
         FIND_PACKAGE_ARGS
     )
     FetchContent_MakeAvailable(simstr)
