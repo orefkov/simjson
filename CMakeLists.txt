@@ -22,7 +22,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
 endif()
 
 option(SIMJSON_BUILD_TESTS "Построить тесты" ON)
-option(SIMJSON_IN_SHARED "Функции simjson должны экспортироваться или импортироваться" Off)
+option(SIMJSON_IN_SHARED "Функции simjson будут экспортироваться или импортироваться" Off)
 
 add_library(simjson_simjson
     src/json.cpp
@@ -56,13 +56,13 @@ function(add_simstr)
     set(SIMSTR_BUILD_TESTS OFF)
     set(SIMSTR_BENCHMARKS OFF)
     if(SIMJSON_IN_SHARED)
-        set(SIMSTR_SHARED On)
+        set(SIMSTR_IN_SHARED On)
     endif()
     FetchContent_Declare(
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG rel.1.2.1
+        GIT_TAG 1f225a7
         FIND_PACKAGE_ARGS NAMES simstr
     )
     FetchContent_MakeAvailable(simstr)
@@ -73,8 +73,22 @@ add_simstr()
 target_link_libraries(simjson_simjson PUBLIC simstr::simstr)
 
 if(SIMJSON_IN_SHARED)
+    # Всем объявляем, что мы будем в shared библиотеке
     add_compile_definitions(SIMJSON_IN_SHARED)
+    # Себе объявим, что мы должны экспортировать функции
     target_compile_definitions(simjson_simjson PRIVATE SIMJSON_EXPORT)
+
+    # Пример построения shared библиотеки, которая включит в себя simjson и simstr.
+    # Как при этом создать экзешник, пользующийся этой dll - пример в tests/CMakeLists.txt
+    # Нельзя объявить библиотеку без исходников, добавим просто .h файл
+    add_library(simjson_dll SHARED include/simjson/json.h)
+    # simstr нельзя просто так добавить как whole_archive, CMake при сборке simjson уже пометил её как DEFAULT
+    target_link_libraries(simjson_dll PRIVATE
+        "$<LINK_LIBRARY:WHOLE_ARCHIVE,simjson::simjson>"
+        simstr_simstr
+    )
+    # Но можно для нужного таргета переопределить её как whole_archive
+    set_property(TARGET simjson_dll PROPERTY LINK_LIBRARY_OVERRIDE "WHOLE_ARCHIVE,simstr_simstr")
 endif(SIMJSON_IN_SHARED)
 
 if(SIMJSON_BUILD_TESTS)
@@ -92,17 +106,6 @@ if(SIMJSON_BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
     add_subdirectory(tests)
 endif()
-
-#[[
-# Пример построения shared библиотеки, которая включит в себя simjson и simstr.
-# Необходимо также задать опцию SIMJSON_IN_SHARED. Как при этом создать экзешник,
-# пользующийся этой dll - пример в tests/CMakeLists.txt
-if (SIMJSON_IN_SHARED)
-    add_library(simjson_dll SHARED include/simjson/json.h)
-    target_link_libraries(simjson_dll PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,simjson::simjson>,simstr_simstr>")
-    set_property(TARGET simjson_dll PROPERTY LINK_LIBRARY_OVERRIDE "WHOLE_ARCHIVE,simstr_simstr")
-endif()
-#]]
 
 # ---- Install rules ----
 
