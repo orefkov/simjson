@@ -378,6 +378,78 @@ TEST(SimJson, JsonStoreString) {
 })");
 }
 
+TEST(SimJson, JsonStoreString16) {
+    JsonValueU json {
+        {u"p1", 1},
+        {u"p3"_h, true},
+        {u"p2"_h, 2},
+        {u"p4"_h, {1, 2, false, Json::null, u"test\ntest\x01", Json::emptyObject, Json::emptyArray}}
+    };
+    EXPECT_EQ(stringu{json.store(false, true)}, uR"({"p1":1,"p2":2,"p3":true,"p4":[1,2,false,null,"test\ntest\u0001",{},[]]})");
+    EXPECT_EQ(stringu{json.store(true, true)}, uR"({
+  "p1": 1,
+  "p2": 2,
+  "p3": true,
+  "p4": [
+    1,
+    2,
+    false,
+    null,
+    "test\ntest\u0001",
+    {},
+    []
+  ]
+})");
+}
+
+TEST(SimJson, JsonStoreString32) {
+    JsonValueUU json {
+        {U"p1", 1},
+        {U"p3"_h, true},
+        {U"p2"_h, 2},
+        {U"p4"_h, {1, 2, false, Json::null, U"test\ntest\x01", Json::emptyObject, Json::emptyArray}}
+    };
+    EXPECT_EQ(stringuu{json.store(false, true)}, UR"({"p1":1,"p2":2,"p3":true,"p4":[1,2,false,null,"test\ntest\u0001",{},[]]})");
+    EXPECT_EQ(stringuu{json.store(true, true)}, UR"({
+  "p1": 1,
+  "p2": 2,
+  "p3": true,
+  "p4": [
+    1,
+    2,
+    false,
+    null,
+    "test\ntest\u0001",
+    {},
+    []
+  ]
+})");
+}
+
+TEST(SimJson, JsonStoreStringW) {
+    JsonValueW json {
+        {L"p1", 1},
+        {L"p3"_h, true},
+        {L"p2"_h, 2},
+        {L"p4"_h, {1, 2, false, Json::null, L"test\ntest\x01", Json::emptyObject, Json::emptyArray}}
+    };
+    EXPECT_EQ(stringw{json.store(false, true)}, LR"({"p1":1,"p2":2,"p3":true,"p4":[1,2,false,null,"test\ntest\u0001",{},[]]})");
+    EXPECT_EQ(stringw{json.store(true, true)}, LR"({
+  "p1": 1,
+  "p2": 2,
+  "p3": true,
+  "p4": [
+    1,
+    2,
+    false,
+    null,
+    "test\ntest\u0001",
+    {},
+    []
+  ]
+})");
+}
+
 TEST(SimJson, JsonThrow) {
     JsonValue val = 10;
     lstringa<100> err_descr;
@@ -428,44 +500,35 @@ TEST(SimJson, JsonStdInitMap) {
     EXPECT_EQ(json2.type(), Json::Object);
     EXPECT_EQ(json2.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
 }
-    /*
-stringa getFileContent(stra fileName) {
-    std::ifstream file(fileName, std::ios::binary | std::ios::ate);
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    lstringsa<0> result;
-    file.read(result.reserve(size), size);
-    return result;
-}
 
+#if 0
 TEST(SimJson, JsonParseBig) {
-    {
-        stringa content1 = get_file_content("citm_catalog.json");
-        stringa content2 = get_file_content("canada.json");
-        stringa content3 = get_file_content("twitter.json");
+    stringa content1 = get_file_content("citm_catalog.json");
+    stringa content2 = get_file_content("canada.json");
+    stringa content3 = get_file_content("twitter.json");
 
-        auto t1 = std::chrono::high_resolution_clock::now();
+    auto t1 = std::chrono::high_resolution_clock::now();
 
-        for (size_t idx = 0; idx < 10; idx++) {
-            auto json1 = JsonValue::parse(content1);
-            EXPECT_EQ(std::get<1>(json1), JsonParseResult::Success);
-            auto json2 = JsonValue::parse(content2);
-            EXPECT_EQ(std::get<1>(json2), JsonParseResult::Success);
-            auto json3 = JsonValue::parse(content3);
-            EXPECT_EQ(std::get<1>(json3), JsonParseResult::Success);
-        }
-
-        auto t2 = std::chrono::high_resolution_clock::now();
-
-        std::chrono::duration<double, std::milli> ms_double = t2 - t1;
-
-        std::cout << "Parse at " << ms_double.count() / 10.0 << std::endl;
-
-        //EXPECT_TRUE(json1.is_object());
-        //EXPECT_TRUE(json2.is_object());
-        //EXPECT_TRUE(json3.is_object());
+    for (size_t idx = 0; idx < 10; idx++) {
+        auto json1 = JsonValue::parse(content1);
+        EXPECT_EQ(std::get<1>(json1), JsonParseResult::Success);
+        stringa t = std::get<0>(json1).store(true, false, ' ', 4);
+        EXPECT_EQ(content1.length(), t.length());
+        auto json2 = JsonValue::parse(content2);
+        EXPECT_EQ(std::get<1>(json2), JsonParseResult::Success);
+        t = std::get<0>(json2).store();
+        auto json3 = JsonValue::parse(content3);
+        EXPECT_EQ(std::get<1>(json3), JsonParseResult::Success);
+        t = std::get<0>(json3).store();
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << "Parse and store at " << ms_double.count() / 10.0 << std::endl;
+
 }
-*/
+#endif
 
 } // namespace simjson::tests

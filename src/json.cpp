@@ -1,10 +1,10 @@
-/*
+﻿/*
  * (c) Проект "SimJson", Александр Орефков orefkov@gmail.com
  * ver. 1.0
  * Классы для работы с JSON
  */
 
- #include <simjson/json.h>
+#include <simjson/json.h>
 #include <cmath>
 #include <algorithm>
 #include <fstream>
@@ -16,6 +16,7 @@ using namespace simstr::literals;
 template<typename K>
 struct expr_json_str {
     using symb_type = K;
+    using test_type = std::make_unsigned_t<K>;
     using ssType = typename JsonValueTempl<K>::ssType;
     ssType text;
     size_t l;
@@ -28,7 +29,7 @@ struct expr_json_str {
         const K* ptr = text.symbols();
         size_t add = 0;
         for (size_t i = text.length(); i-- ;) {
-            K s = *ptr++;
+            test_type s = (test_type)*ptr++;
             switch (s) {
             case '\b':
             case '\f':
@@ -86,7 +87,7 @@ struct expr_json_str {
         const K* r = text.symbols();
         size_t lenOfText = text.length(), lenOfTail = l - lenOfText;
         while (lenOfTail) {
-            K s = *r++;
+            test_type s = (test_type)*r++;
             switch (s) {
             case '\"':
                 *ptr++ = '\\';
