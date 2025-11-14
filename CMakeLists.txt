@@ -37,8 +37,11 @@ target_include_directories(
 
 target_compile_features(simjson_simjson PUBLIC cxx_std_20)
 
+if (NOT CMAKE_CXX_SIMULATE_ID)
+    set (CMAKE_CXX_SIMULATE_ID "None")
+endif()
 # Для MSVC подключаем natvis файл для красивой отладки
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC OR ${CMAKE_CXX_SIMULATE_ID} STREQUAL MSVC)
     target_link_options(simjson_simjson PUBLIC "/natvis:${CMAKE_CURRENT_SOURCE_DIR}/for_debug/simjson.natvis")
 endif()
 
@@ -62,7 +65,7 @@ function(add_simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG 1f225a7
+        GIT_TAG 4ddb1ae
         FIND_PACKAGE_ARGS NAMES simstr
     )
     FetchContent_MakeAvailable(simstr)
