@@ -5,7 +5,7 @@ include(FetchContent)
 
 project(
     simjson
-    VERSION 1.0.0
+    VERSION 1.2.1
     DESCRIPTION "Very simple json library"
     HOMEPAGE_URL "https://github.com/orefkov/simjson"
     LANGUAGES CXX
@@ -22,7 +22,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
 endif()
 
 option(SIMJSON_BUILD_TESTS "Построить тесты" ON)
-option(SIMJSON_IN_SHARED "Функции simjson будут экспортироваться или импортироваться" Off)
 
 add_library(simjson_simjson
     src/json.cpp
@@ -37,12 +36,20 @@ target_include_directories(
 
 target_compile_features(simjson_simjson PUBLIC cxx_std_20)
 
-if (NOT CMAKE_CXX_SIMULATE_ID)
-    set (CMAKE_CXX_SIMULATE_ID "None")
-endif()
 # Для MSVC подключаем natvis файл для красивой отладки
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC OR ${CMAKE_CXX_SIMULATE_ID} STREQUAL MSVC)
-    target_link_options(simjson_simjson PUBLIC "/natvis:${CMAKE_CURRENT_SOURCE_DIR}/for_debug/simjson.natvis")
+if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    if (NOT CMAKE_CXX_SIMULATE_ID)
+        set (CMAKE_CXX_SIMULATE_ID "None")
+    endif()
+    if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC OR ${CMAKE_CXX_SIMULATE_ID} STREQUAL MSVC)
+        add_custom_command(
+            TARGET simjson_simjson PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/for_debug/simjson.natvis
+            ${CMAKE_CURRENT_BINARY_DIR}/simjson.natvis
+        )
+        target_link_options(simjson_simjson PUBLIC "/natvis:simjson.natvis")
+    endif()
 endif()
 
 set_target_properties(
@@ -75,24 +82,12 @@ add_simstr()
 
 target_link_libraries(simjson_simjson PUBLIC simstr::simstr)
 
-if(SIMJSON_IN_SHARED)
+if(BUILD_SHARED_LIBS)
     # Всем объявляем, что мы будем в shared библиотеке
     add_compile_definitions(SIMJSON_IN_SHARED)
     # Себе объявим, что мы должны экспортировать функции
     target_compile_definitions(simjson_simjson PRIVATE SIMJSON_EXPORT)
-
-    # Пример построения shared библиотеки, которая включит в себя simjson и simstr.
-    # Как при этом создать экзешник, пользующийся этой dll - пример в tests/CMakeLists.txt
-    # Нельзя объявить библиотеку без исходников, добавим просто .h файл
-    add_library(simjson_dll SHARED include/simjson/json.h)
-    # simstr нельзя просто так добавить как whole_archive, CMake при сборке simjson уже пометил её как DEFAULT
-    target_link_libraries(simjson_dll PRIVATE
-        "$<LINK_LIBRARY:WHOLE_ARCHIVE,simjson::simjson>"
-        simstr_simstr
-    )
-    # Но можно для нужного таргета переопределить её как whole_archive
-    set_property(TARGET simjson_dll PROPERTY LINK_LIBRARY_OVERRIDE "WHOLE_ARCHIVE,simstr_simstr")
-endif(SIMJSON_IN_SHARED)
+endif(BUILD_SHARED_LIBS)
 
 if(SIMJSON_BUILD_TESTS)
     enable_testing()
