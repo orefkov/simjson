@@ -5,6 +5,8 @@ Designed to work with JSON when using the [simstr](https://github.com/orefkov/si
 
 Version 1.2.1.
 
+<span class="obfuscator"><a href="readme_ru.md">On Russian | По-русски</a></span>
+
 This library contains a simple implementation of a simple JsonValue object for working with JSON using string objects
 of the *simstr* library, since other libraries mainly work with `std::string` or raw `const char*`.
 The task was not to somehow compete in performance or optimality with other libraries, I mainly use it
