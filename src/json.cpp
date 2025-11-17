@@ -4,6 +4,13 @@
  * Классы для работы с JSON
  */
 
+/*!
+ * @ru @mainpage Библиотека simjson.
+ * @include{doc} "../readme_ru.md"
+ * @en @mainpage Simjson lib.
+ * @include{doc} "../readme.md"
+ */
+
 #include <simjson/json.h>
 #include <cmath>
 #include <algorithm>

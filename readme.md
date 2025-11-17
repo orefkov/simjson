@@ -1,77 +1,77 @@
-# simjson - простейшая библиотека для работы с JSON
+# simjson - the simplest library for working with JSON
 [![CMake on multiple platforms](https://github.com/orefkov/simjson/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/orefkov/simjson/actions/workflows/cmake-multi-platform.yml)
 
-Предназначена для работы с JSON при использовании библиотеки [simstr](https://github.com/orefkov/simstr).
+Designed to work with JSON when using the [simstr](https://github.com/orefkov/simstr) library.
 
-Версия 1.2.1.
+Version 1.2.1.
 
-В этой библиотеке содержится простая реализация простого объекта JsonValue для работы с JSON с использованием строковых объектов
-библиотеки *simstr*, так как другие библиотеки работают в основном с `std::string` или сырыми `const char*`.
-Задача как-то соревноваться по производительности или оптимальности с другими библиотеками не ставилась, я её применяю в-основном 
-для работы с небольшими конфиг-файлами - прочитать, изменить, записать.
+This library contains a simple implementation of a simple JsonValue object for working with JSON using string objects
+of the *simstr* library, since other libraries mainly work with `std::string` or raw `const char*`.
+The task was not to somehow compete in performance or optimality with other libraries, I mainly use it
+for working with small config files - read, modify, write.
 
-Для json-объектов используется `std::unordered_map`, в лице `hashStrMap<K, JsonValueTemp<K>>`,
-для массивов - `std::vector<JsonValueTemp<K>>`, строки хранятся в `sstring<K>`.
+For json objects, `std::unordered_map` is used, in the form of `hashStrMap<K, JsonValueTemp<K>>`,
+for arrays - `std::vector<JsonValueTemp<K>>`, strings are stored in `sstring<K>`.
 
-## Основные возможности библиотеки
-- Работает со всеми строками simstr.
-- Поддерживает работу со строками `char`, `char16_t`, `char32_t`, `wchar_t`.
-- Удобное создание, чтение и модификация json значений.
-- Копирование таких JSON-значений, как массивы и объекты производится по ссылке (копируется только `shared_ptr`).
-- Возможно "глубокое" копирование aka клонирование, JSON-значений, в этом случае для массивов и объектов создаётся полная копия.
-- "Слияние" одного JSON объекта с другим, с возможностью задать приоритет.
-- Расширенная работа с числами - позволяет использовать int64_t и double.
-- Парсинг строки в Json, с поддержкой порционного парсинга.
-- Сериализация json в строку, с опциями - сортировка ключей, "читаемый" вывод, количество отступов и символ
-  отступа при "читаемом" выводе.
+## Key features of the library
+- Works with all simstr strings.
+- Supports working with strings `char`, `char16_t`, `char32_t`, `wchar_t`.
+- Convenient creation, reading and modification of json values.
+- Copying JSON values such as arrays and objects is done by reference (only `shared_ptr` is copied).
+- Possible "deep" copying aka cloning of JSON values, in this case a full copy is created for arrays and objects.
+- "Merging" one JSON object with another, with the ability to set priority.
+- Extended work with numbers - allows you to use int64_t and double.
+- Parsing a string into Json, with support for partial parsing.
+- Serializing json to a string, with options - sorting keys, "readable" output, number of indents and symbol
+  indentation with "readable" output.
 
-## Основные объекты библиотеки
-- JsonValueTempl<K> - тип Json значения, параметр К задаёт тип используемых символов в строке. Алиасы:
-  - JsonValue - для строк char
-  - JsonValueU - для строк char16_t
-  - JsonValueUU - для строк char32_t
-  - JsonValueW - для строк wchar_t
-- StreamedJsonParser<K> - парсер строки в JSON, поддерживающий "порционный" парсинг.\
-  Например, данные приходят порциями из сети, вы их по мере поступления скармливаете парсеру, пока он или не
-  распарсит, или выдаст ошибку.
+## Main objects of the library
+- JsonValueTempl<K> - Json value type, parameter K specifies the type of characters used in the string. Aliases:
+  - JsonValue - for char strings
+  - JsonValueU - for char16_t strings
+  - JsonValueUU - for char32_t strings
+  - JsonValueW - for wchar_t strings
+- StreamedJsonParser<K> - parser of a string into JSON, supporting "partial" parsing.
+  For example, data comes in portions from the network, you feed it to the parser as it arrives, until it either
+  parses, or throws an error.
 
-## Использование
-`simjson` состоит из заголовочного файла и одного исходника. Можно подключать как CMake проект через `add_subdirectory` (библиотека `simjson`),
-можно просто включить файлы в свой проект. Для сборки также требуется [simstr](https://github.com/orefkov/simstr) (при использовании CMake
-скачивается автоматически).
+## Usage
+`simjson` consists of a header file and one source file. You can connect as a CMake project via `add_subdirectory` (the `simjson` library),
+you can simply include the files in your project. Building also requires [simstr](https://github.com/orefkov/simstr) (when using CMake
+downloads automatically).
 
-Для работы `simjson` требуется компилятор с поддержкой стандарта не ниже С++20 (используются концепты).
+`simjson` requires a compiler with support for a standard no lower than C++20 (concepts are used).
 
-## Примеры использования
-### Создание, чтение
+## Usage examples
+### Creating, reading
 ```cpp
-    // Простой json, равный 1.
+    // Simple json, equal to 1.
     JsonValue json = 1; // int64
     stringa text = json.store(); // "1"
     
-    // Инициализация объекта, ""_h - несколько оптимизирует ключ, вычисляя хэш при компиляции
+    // Initialization of the object, ""_h - slightly optimizes the key, calculating the hash during compilation
     JsonValue obj = {
         {"Key1"_h, 1},
         {"Key2"_h, true},
-        {"Key3", {1, 2, Json::null, "test", false}}, // тут будет массив [1, 2, null, "test", false]
+        {"Key3", {1, 2, Json::null, "test", false}}, // here will be an array [1, 2, null, "test", false]
         {"Key4"_h, {
             {"subkey1"_h, true},
             {"subkey2", "subkey"},
         }},
     };
 
-    // Пустой объект
+    // Empty object
     JsonValue test;
-    // Сохраняем ключи, сразу несколько уровней
+    // Saving keys, immediately several levels
     test["a"_h]["b"_h]["c"_h] = 10;
     text = json.store(); // {"a":{"b":{"c":10}}}
     
-    // Преобразует json-объект в массив
+    // Converts a json object to an array
     test[0] = "value";
-    test[-1] = true;  // При использовании -1 - значение добавляется в конец массива
-    test[10] = false; // Увеличит размер массива до 11
+    test[-1] = true;  // When using -1 - the value is added to the end of the array
+    test[10] = false; // Will increase the array size to 11
 
-    // Прочитать значение
+    // Read value
     JsonValue config;
     ....
     stringa log_path = config("instance"_h, "base"_h, "log"_h, "path"_h).text().value_or("./log.txt");
@@ -79,7 +79,7 @@
       "not specified work dir");
 ```
 
-### Пример: Задание дефолтных значений, чтение из файла и объединение с дефолтными значениями.
+### Example: Setting default values, reading from a file and merging with default values.
 ```cpp
 
 JsonValue json_config = {
@@ -122,11 +122,11 @@ void read_config_from_file(ssa folder, ssa file_name) {
             }
             json_config.merge(readed);
         }
-        // У нас в дефолтном конфиге могли появится новые ключи, и хотелось бы их дефолтные значения
-        // также скинуть в файл, чтобы проще потом редактировать.
+        // We may have new keys in the default config, and I would like their default values
+        // also drop to the file, to make it easier to edit later.
         stringa new_config = json_config.store(true, true, ' ', 4);
         if (new_config != config) {
-            // В дефолтном конфиге добавились новые ключи
+            // New keys have been added to the default config
             std::ofstream file(fullPath.c_str(), std::ios::binary | std::ios::trunc);
             if (!file.is_open()) {
                 std::cerr << "Error in create config file " << fullPath << std::endl;
@@ -138,9 +138,9 @@ void read_config_from_file(ssa folder, ssa file_name) {
     json_config["runtime"_h]["location"_h]["base_dir"_h] = std::move(path_checked);
 }
 ```
-### Пример - инициализация из стандартных контейнеров
+### Example - initialization from standard containers
 ```cpp
-    // Массивы
+    // Arrays
     std::vector<int> vals = {1, 2, 3, 4};
     JsonValue json = vals;
     EXPECT_EQ(json.type(), Json::Array);
@@ -155,7 +155,7 @@ void read_config_from_file(ssa folder, ssa file_name) {
     EXPECT_EQ(json2.type(), Json::Array);
     EXPECT_EQ(json2.store(), "[\"one\",\"two\",\"three\"]");
 
-    // Ключ-значение
+    // Key-value
     hashStrMapA<int> vals = {
         {"one"_h, 1}, {"two"_h, 2}, {"three"_h, 3}, {"four"_h, 4}
     };
@@ -179,5 +179,5 @@ void read_config_from_file(ssa folder, ssa file_name) {
 
 ```
 
-## Сгенерированная документация
-[Находится здесь](https://snegopat.ru/simjson/docs/)
+## Generated documentation
+[Located here](https://snegopat.ru/simjson/docs/en/)
