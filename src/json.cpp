@@ -1158,9 +1158,9 @@ template class JsonValueTempl<u16s>;
 template class JsonValueTempl<u32s>;
 template class JsonValueTempl<wchar_t>;
 
-template class StreamedJsonParser<u8s>;
-template class StreamedJsonParser<u16s>;
-template class StreamedJsonParser<u32s>;
-template class StreamedJsonParser<wchar_t>;
+template struct StreamedJsonParser<u8s>;
+template struct StreamedJsonParser<u16s>;
+template struct StreamedJsonParser<u32s>;
+template struct StreamedJsonParser<wchar_t>;
 
 } // namespace simjson
