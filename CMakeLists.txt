@@ -45,7 +45,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
         add_custom_command(
             TARGET simjson_simjson PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/for_debug/simjson.natvis
+            ${CMAKE_CURRENT_SOURCE_DIR}/for_debug/simjson.natvis
             ${CMAKE_CURRENT_BINARY_DIR}/simjson.natvis
         )
         target_link_options(simjson_simjson PUBLIC "/natvis:simjson.natvis")
@@ -72,7 +72,7 @@ function(add_simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG 4ddb1ae
+        GIT_TAG tags/rel1.2.4
         FIND_PACKAGE_ARGS NAMES simstr
     )
     FetchContent_MakeAvailable(simstr)
