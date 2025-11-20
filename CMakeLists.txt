@@ -5,7 +5,7 @@ include(FetchContent)
 
 project(
     simjson
-    VERSION 1.2.1
+    VERSION 1.2.2
     DESCRIPTION "Very simple json library"
     HOMEPAGE_URL "https://github.com/orefkov/simjson"
     LANGUAGES CXX
@@ -37,19 +37,14 @@ target_include_directories(
 target_compile_features(simjson_simjson PUBLIC cxx_std_20)
 
 # Для MSVC подключаем natvis файл для красивой отладки
-if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    if (NOT CMAKE_CXX_SIMULATE_ID)
-        set (CMAKE_CXX_SIMULATE_ID "None")
-    endif()
-    if(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC OR ${CMAKE_CXX_SIMULATE_ID} STREQUAL MSVC)
-        add_custom_command(
-            TARGET simjson_simjson PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_CURRENT_SOURCE_DIR}/for_debug/simjson.natvis
-            ${CMAKE_CURRENT_BINARY_DIR}/simjson.natvis
-        )
-        target_link_options(simjson_simjson PUBLIC "/natvis:simjson.natvis")
-    endif()
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC OR "${CMAKE_CXX_SIMULATE_ID} " STREQUAL "MSVC ")
+    add_custom_command(
+        TARGET simjson_simjson PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/for_debug/simjson.natvis
+        ${CMAKE_BINARY_DIR}/simjson.natvis
+    )
+    target_link_options(simjson_simjson PUBLIC "/natvis:${CMAKE_BINARY_DIR}/simjson.natvis")
 endif()
 
 set_target_properties(
@@ -72,7 +67,7 @@ function(add_simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG 5b81228
+        GIT_TAG tags/rel1.2.5
         FIND_PACKAGE_ARGS NAMES simstr
     )
     FetchContent_MakeAvailable(simstr)

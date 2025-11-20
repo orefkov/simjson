@@ -3,7 +3,7 @@
 
 Предназначена для работы с JSON при использовании библиотеки [simstr](https://github.com/orefkov/simstr).
 
-Версия 1.2.1.
+Версия 1.2.2.
 
 <span class="obfuscator"><a href="readme.md">On English | По-английски</a></span>
 
