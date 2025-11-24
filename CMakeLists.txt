@@ -67,7 +67,7 @@ function(add_simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG tags/rel1.2.5
+        GIT_TAG 458007e
         FIND_PACKAGE_ARGS NAMES simstr
     )
     FetchContent_MakeAvailable(simstr)
