@@ -3,14 +3,14 @@
 
 Designed to work with JSON when using the [simstr](https://github.com/orefkov/simstr) library.
 
-Version 1.2.2.
+Version 1.2.3.
 
 <span class="obfuscator"><a href="readme_ru.md">On Russian | По-русски</a></span>
 
 This library contains a simple implementation of a simple JsonValue object for working with JSON using string objects
 of the *simstr* library, since other libraries mainly work with `std::string` or raw `const char*`.
 The task was not to somehow compete in performance or optimality with other libraries, I mainly use it
-for working with small config files - read, modify, write.
+for working with small config files - read, modify, write. However, it also copes quite well with large files.
 
 For json objects, `std::unordered_map` is used, in the form of `hashStrMap<K, JsonValueTemp<K>>`,
 for arrays - `std::vector<JsonValueTemp<K>>`, strings are stored in `sstring<K>`.
@@ -50,7 +50,7 @@ downloads automatically).
     // Simple json, equal to 1.
     JsonValue json = 1; // int64
     stringa text = json.store(); // "1"
-    
+
     // Initialization of the object, ""_h - slightly optimizes the key, calculating the hash during compilation
     JsonValue obj = {
         {"Key1"_h, 1},
@@ -67,7 +67,7 @@ downloads automatically).
     // Saving keys, immediately several levels
     test["a"_h]["b"_h]["c"_h] = 10;
     text = json.store(); // {"a":{"b":{"c":10}}}
-    
+
     // Converts a json object to an array
     test[0] = "value";
     test[-1] = true;  // When using -1 - the value is added to the end of the array
@@ -114,9 +114,9 @@ void read_config_from_file(ssa folder, ssa file_name) {
         stringa config;
         if (is_file_exist(fullPath)) {
             config = get_file_content(fullPath);
-            
+
             auto [readed, error, line, col] = JsonValue::parse(config);
-            
+
             if (error != JsonParseResult::Success) {
                 std::cerr << "Error in parse config file " << fullPath <<
                   " at line " << line << ", col " << col << std::endl;

@@ -501,6 +501,22 @@ TEST(SimJson, JsonStdInitMap) {
     EXPECT_EQ(json2.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
 }
 
+TEST(SimJson, ManyKeys) {
+    JsonValueU json = {
+        {u"a"_h, {
+            {u"b"_h, {
+                {{u"c"_h, 1}},
+                {{u"c"_h, 10}}
+            }}
+        }},
+    };
+    EXPECT_EQ(json.store(), uR"=({"a":{"b":[{"c":1},{"c":10}]}})=");
+
+    const auto v = json(u"a"_h, u"b"_h, 1, u"c"_h);
+    ASSERT_TRUE(v.is_integer());
+    EXPECT_EQ(v.as_integer(), 10);
+}
+
 #if 0
 TEST(SimJson, JsonParseBig) {
     stringa content1 = get_file_content("citm_catalog.json");

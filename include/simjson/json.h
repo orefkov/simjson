@@ -582,32 +582,36 @@ public:
         return at(std::forward<T>(key));
     }
     /*!
-     * @ru @brief Обращение к свойству константного объекта по набору ключей.
-     * @details Функция последовательно переходит от значения к значению по заданным ключам.
-     *  Как только указанный ключ не будет найден, перебор останавливается.
-     *  Например: config("a", "b", "c") для объекта {"a": {"b": {"c": 10}}} вернёт ссылку на 10.
+     * @ru @brief Обращение к свойству константного объекта по набору ключей/индексов.
+     * @details Функция последовательно переходит от значения к значению по заданным ключам/индексам.
+     *  Как только указанный ключ/индекс не будет найден, перебор останавливается.
+     *  Например: config("a", "b", 1, "c") для объекта {"a": {"b":[{"c": 2}, {"c": 10}]}} вернёт ссылку на 10.
      * @tparam T - типа ключа.
-     * @param key - ключ.
+     * @param key - ключ / индекс.
      * @param ...args - остальные ключи.
-     * @return const json_value& - ссылка на значение ключа.
+     * @return const json_value& - ссылка на найденное значение.
      *   Если значение не объект, или указанного ключа нет, не создаёт новую пару, а возвращает ссылку на UNDEFINED.
-     * @en @brief Access to a property of a constant object by a set of keys.
-     * @details The function moves sequentially from value to value based on the given keys.
-     * As soon as the specified key is not found, the search stops.
-     * For example: config("a", "b", "c") for object {"a": {"b": {"c": 10}}} will return a reference to 10.
+     * @en @brief Access to a property of a constant object by a set of keys/indexes.
+     * @details The function moves sequentially from value to value based on the given keys/indexes.
+     * As soon as the specified key/index is not found, the search stops.
+     * For example: config("a", "b", 1, "c") for object {"a": {"b": [{"c": 2}, {"c": 10}]}} will return a reference to 10.
      * @tparam T - key type.
-     * @param key - key.
+     * @param key - key / index.
      * @param ...args - other keys.
      * @return const json_value& - reference to the key value.
      * If the value is not an object, or the specified key does not exist, does not create a new pair, but returns a reference to UNDEFINED.
      */
-    template<jt::JsonKeyType<K> T, typename...Args>
+    template<typename T, typename...Args> requires (jt::JsonKeyType<T, K> || std::convertible_to<T, size_t>)
     const json_value& operator()(T&& key, Args&&...args) const {
         const json_value& res = at(std::forward<T>(key));
         if constexpr (sizeof...(Args) == 0) {
             return res;
         } else {
-            return res.is_undefined() ? res : res(std::forward<Args>(args)...);
+            if constexpr (jt::JsonKeyType<std::tuple_element_t<0, std::tuple<Args...>>, K>) {
+                return res.is_object() ? res(std::forward<Args>(args)...) : UNDEFINED;
+            } else {
+                return res.is_array() ? res(std::forward<Args>(args)...) : UNDEFINED;
+            }
         }
     }
     /*!

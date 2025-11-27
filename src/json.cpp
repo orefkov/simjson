@@ -243,7 +243,6 @@ inline static bool is_double_int64(double dbl) {
     return
         !std::isnan(dbl) &&
         !std::isinf(dbl) &&
-        // std::numeric_limits<int64_t>::max() при конвертировании в double меняет 9223372036854775807 на 9223372036854775808
         dbl <= (uint64_t(1) << 53) &&
         dbl >= -(int64_t)(uint64_t(1) << 53);
 }
@@ -254,20 +253,15 @@ SIMJSON_API std::optional<int64_t> JsonValueTempl<K>::to_integer() const {
     case Boolean:
         return val_.boolean ? 1 : 0;
     case Text: {
-        auto txt = as_text().template trimmed_right<ssType>();
-        auto [res, err, processed] = txt.template to_int<int64_t>();
+        auto txt = as_text().trimmed();
+        auto [res, err, processed] = txt.template to_int<int64_t, true, 0, false>();
         if (err == IntConvertResult::Success) {
             return res;
         }
         if (processed > 0 && err == IntConvertResult::BadSymbolAtTail &&
-            (txt[processed] == '.' || txt[processed] == 'e' || txt[processed] == 'E')) {
+            (txt[processed] == '.' || (txt[processed] | 0x20) == 'e')) {
             // Считаем, что в тексте double
-            auto dbl = std::nan("");
-            if constexpr (is_one_of_std_char_v<K>) {
-                dbl = txt.to_double();
-            } else {
-                dbl = lstringa<100>{txt}.to_double();
-            }
+            auto dbl = txt.to_double().value_or(std::nan("0"));
             if (is_double_int64(dbl)) {
                 return static_cast<int64_t>(dbl);
             }
@@ -301,11 +295,7 @@ SIMJSON_API double JsonValueTempl<K>::to_real() const {
     case Json::Boolean:
         return val_.boolean ? 1.0 : 0.0;
     case Json::Text:
-        if constexpr (is_one_of_std_char_v<K>) {
-            return val_.text.to_double();
-        } else {
-            return lstringa<100>{val_.text}.to_double();
-        }
+        return val_.text.to_double().value_or(std::nan("0"));
     case Json::Integer:
         return static_cast<double>(val_.integer);
     case Json::Real:
@@ -485,7 +475,10 @@ struct json_store {
                     }
                 }
             }
-            buffer += e_if(prettify && printed, uni_string(K, "\n") + e_c(indent - indent_count, indent_symb)) + uni_string(K, "}");
+            if (prettify && printed) {
+                buffer += uni_string(K, "\n") + e_c(indent - indent_count, indent_symb);
+            }
+            buffer += uni_string(K, "}");
             break;
         case Json::Array:
             buffer += uni_string(K, "[");
@@ -494,7 +487,10 @@ struct json_store {
                 store(it, indent + indent_count);
                 printed = true;
             }
-            buffer += e_if(prettify && printed, uni_string(K, "\n") + e_c(indent - indent_count, indent_symb)) + uni_string(K, "]");
+            if (prettify && printed) {
+                buffer += uni_string(K, "\n") + e_c(indent - indent_count, indent_symb);
+            }
+            buffer += uni_string(K, "]");
             break;
         }
     }
@@ -1120,11 +1116,7 @@ JsonValueTempl<K>* StreamedJsonParser<K>::addNumber(JsonValueTempl<K>* current) 
     }
 
     if (!asInt || jsonValue.is_undefined()) {
-        if constexpr (is_one_of_std_char_v<K>) {
-            jsonValue = ssValue.to_double();
-        } else {
-            jsonValue = lstringa<100>(ssValue).to_double();
-        }
+        jsonValue = ssValue.to_double().value_or(std::nan("0"));
     }
 
     if constexpr (!All) {

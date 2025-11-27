@@ -3,14 +3,14 @@
 
 Предназначена для работы с JSON при использовании библиотеки [simstr](https://github.com/orefkov/simstr).
 
-Версия 1.2.2.
+Версия 1.2.3.
 
 <span class="obfuscator"><a href="readme.md">On English | По-английски</a></span>
 
 В этой библиотеке содержится простая реализация простого объекта JsonValue для работы с JSON с использованием строковых объектов
 библиотеки *simstr*, так как другие библиотеки работают в основном с `std::string` или сырыми `const char*`.
-Задача как-то соревноваться по производительности или оптимальности с другими библиотеками не ставилась, я её применяю в-основном 
-для работы с небольшими конфиг-файлами - прочитать, изменить, записать.
+Задача как-то соревноваться по производительности или оптимальности с другими библиотеками не ставилась, я её применяю в-основном
+для работы с небольшими конфиг-файлами - прочитать, изменить, записать, однако и с большими файлами она вполне успешно справляется.
 
 Для json-объектов используется `std::unordered_map`, в лице `hashStrMap<K, JsonValueTemp<K>>`,
 для массивов - `std::vector<JsonValueTemp<K>>`, строки хранятся в `sstring<K>`.
@@ -50,7 +50,7 @@
     // Простой json, равный 1.
     JsonValue json = 1; // int64
     stringa text = json.store(); // "1"
-    
+
     // Инициализация объекта, ""_h - несколько оптимизирует ключ, вычисляя хэш при компиляции
     JsonValue obj = {
         {"Key1"_h, 1},
@@ -67,7 +67,7 @@
     // Сохраняем ключи, сразу несколько уровней
     test["a"_h]["b"_h]["c"_h] = 10;
     text = json.store(); // {"a":{"b":{"c":10}}}
-    
+
     // Преобразует json-объект в массив
     test[0] = "value";
     test[-1] = true;  // При использовании -1 - значение добавляется в конец массива
@@ -114,9 +114,9 @@ void read_config_from_file(ssa folder, ssa file_name) {
         stringa config;
         if (is_file_exist(fullPath)) {
             config = get_file_content(fullPath);
-            
+
             auto [readed, error, line, col] = JsonValue::parse(config);
-            
+
             if (error != JsonParseResult::Success) {
                 std::cerr << "Error in parse config file " << fullPath <<
                   " at line " << line << ", col " << col << std::endl;
