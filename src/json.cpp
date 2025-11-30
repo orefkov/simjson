@@ -1116,7 +1116,7 @@ JsonValueTempl<K>* StreamedJsonParser<K>::addNumber(JsonValueTempl<K>* current) 
     }
 
     if (!asInt || jsonValue.is_undefined()) {
-        jsonValue = ssValue.to_double().value_or(std::nan("0"));
+        jsonValue = ssValue.template to_double<false, false>().value_or(std::nan("0"));
     }
 
     if constexpr (!All) {
