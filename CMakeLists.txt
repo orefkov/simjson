@@ -1,11 +1,12 @@
 ﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 include(cmake/prelude.cmake)
 include(CMakeDependentOption)
 include(FetchContent)
 
 project(
     simjson
-    VERSION 1.2.3
+    VERSION 1.2.4
     DESCRIPTION "Very simple json library"
     HOMEPAGE_URL "https://github.com/orefkov/simjson"
     LANGUAGES CXX
@@ -67,8 +68,8 @@ function(add_simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG tags/rel1.2.6
-        FIND_PACKAGE_ARGS NAMES simstr
+        GIT_TAG e62493a #tags/rel1.6.6
+        FIND_PACKAGE_ARGS NAMES "simstr 1.6.7"
     )
     FetchContent_MakeAvailable(simstr)
 endfunction()
@@ -91,13 +92,17 @@ if(SIMJSON_BUILD_TESTS)
     FetchContent_Declare(
         googletest
         # Specify the commit you depend on and update it regularly.
-        URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
-        FIND_PACKAGE_ARGS NAMES GTest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
+        FIND_PACKAGE_ARGS NAMES "GTest 1.17.0"
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt FALSE CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
     add_subdirectory(tests)
+    if(TARGET gtest)
+        target_compile_features(gtest PUBLIC cxx_std_23)
+        target_compile_features(gtest_main PUBLIC cxx_std_23)
+    endif()
 endif()
 
 # ---- Install rules ----

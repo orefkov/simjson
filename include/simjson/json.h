@@ -1,4 +1,4 @@
-/*
+﻿/*
  * (c) Проект "SimJson", Александр Орефков orefkov@gmail.com
  * ver. 1.0
  * Классы для работы с JSON
@@ -96,7 +96,7 @@ concept JsonType = std::is_integral_v<std::remove_cvref_t<T>> ||
     std::is_constructible_v<sstring<K>, T>;
 
 template<typename T, typename K>
-concept JsonKeyType = std::convertible_to<T, simple_str<K>> ||
+concept JsonKeyType = std::convertible_to<T, str_src<K>> ||
     std::same_as<std::remove_cvref_t<T>, KeyType<K>>;
 
 template<typename T, typename K>
@@ -753,7 +753,13 @@ public:
      * JsonParseResult - parsing error code, Success if successful;
      * unsigned line, unsigned col - in case of an error, these are the line/column numbers where the error occurred.
      */
-    static std::tuple<json_value, JsonParseResult, unsigned, unsigned> parse(ssType jsonString);
+    struct parse_result {
+        json_value value;
+        JsonParseResult err;
+        unsigned line;
+        unsigned col;
+    };
+    static parse_result parse(ssType jsonString);
     /*!
      * @ru @brief Сериализовать json-значение в строку.
      * @param stream - строка, в которую сохранять.
@@ -891,23 +897,26 @@ protected:
 };
 
 template<typename K>
-std::tuple<JsonValueTempl<K>, JsonParseResult, unsigned, unsigned> JsonValueTempl<K>::parse(ssType jsonString) {
+JsonValueTempl<K>::parse_result JsonValueTempl<K>::parse(ssType jsonString) {
     StreamedJsonParser<K> parser;
     auto res = parser.parseAll(jsonString);
     return {std::move(parser.result_), res, parser.line_, parser.col_};
 }
 
-/// @ru Алиас для JsonValue с символами u8s.
-/// @en Alias ​​for JsonValue with u8s characters.
+/// @ru Алиас для JsonValue с символами char.
+/// @en Alias ​​for JsonValue with char characters.
 using JsonValue = JsonValueTempl<u8s>;
-/// @ru Алиас для JsonValue с символами uws.
-/// @en Alias ​​for JsonValue with uws symbols.
+/// @ru Алиас для JsonValue с символами char8_t.
+/// @en Alias ​​for JsonValue with char8_t characters.
+using JsonValueB = JsonValueTempl<ubs>;
+/// @ru Алиас для JsonValue с символами wchar_t.
+/// @en Alias ​​for JsonValue with wchar_tsymbols.
 using JsonValueW = JsonValueTempl<uws>;
-/// @ru Алиас для JsonValue с символами u16s.
-/// @en Alias ​​for JsonValue with u16s characters.
+/// @ru Алиас для JsonValue с символами char16_t.
+/// @en Alias ​​for JsonValue with char16_t characters.
 using JsonValueU = JsonValueTempl<u16s>;
-/// @ru Алиас для JsonValue с символами u32s.
-/// @en Alias ​​for JsonValue with u32s characters.
+/// @ru Алиас для JsonValue с символами char32_t.
+/// @en Alias ​​for JsonValue with char32_t characters.
 using JsonValueUU = JsonValueTempl<u32s>;
 
 /// @ru Один объект "пустышка".

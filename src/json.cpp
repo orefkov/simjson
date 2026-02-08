@@ -363,9 +363,9 @@ SIMJSON_API typename JsonValueTempl<K>::strType JsonValueTempl<K>::to_text() con
         return e_num<K>(val_.integer);
     case Real:
         if constexpr (is_one_of_std_char_v<K>) {
-            return e_real<K>(val_.real);
+            return e_num<K>(val_.real);
         } else {
-            return lstringa<64>{e_real<u8s>(val_.real)};
+            return lstringa<64>{e_num<u8s>(val_.real)};
         }
     default:
         return {};
@@ -1146,11 +1146,13 @@ stringa get_file_content(stra filePath) {
 
 // Явно инстанцируем шаблоны для этих типов
 template class JsonValueTempl<u8s>;
+//template class JsonValueTempl<ubs>;
 template class JsonValueTempl<u16s>;
 template class JsonValueTempl<u32s>;
 template class JsonValueTempl<wchar_t>;
 
 template struct StreamedJsonParser<u8s>;
+template struct StreamedJsonParser<ubs>;
 template struct StreamedJsonParser<u16s>;
 template struct StreamedJsonParser<u32s>;
 template struct StreamedJsonParser<wchar_t>;
