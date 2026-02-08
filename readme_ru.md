@@ -3,7 +3,7 @@
 
 Предназначена для работы с JSON при использовании библиотеки [simstr](https://github.com/orefkov/simstr).
 
-Версия 1.2.3.
+Версия 1.2.4.
 
 <span class="obfuscator"><a href="readme.md">On English | По-английски</a></span>
 
@@ -14,6 +14,9 @@
 
 Для json-объектов используется `std::unordered_map`, в лице `hashStrMap<K, JsonValueTemp<K>>`,
 для массивов - `std::vector<JsonValueTemp<K>>`, строки хранятся в `sstring<K>`.
+
+## Сгенерированная документация
+[Находится здесь](https://orefkov.github.io/simjson/docs_ru/)
 
 ## Основные возможности библиотеки
 - Работает со всеми строками simstr.
@@ -180,6 +183,3 @@ void read_config_from_file(ssa folder, ssa file_name) {
     EXPECT_EQ(json2.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
 
 ```
-
-## Сгенерированная документация
-[Находится здесь](https://snegopat.ru/simjson/docs/ru/)

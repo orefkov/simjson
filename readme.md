@@ -3,7 +3,7 @@
 
 Designed to work with JSON when using the [simstr](https://github.com/orefkov/simstr) library.
 
-Version 1.2.3.
+Version 1.2.4.
 
 <span class="obfuscator"><a href="readme_ru.md">On Russian | По-русски</a></span>
 
@@ -14,6 +14,9 @@ for working with small config files - read, modify, write. However, it also cope
 
 For json objects, `std::unordered_map` is used, in the form of `hashStrMap<K, JsonValueTemp<K>>`,
 for arrays - `std::vector<JsonValueTemp<K>>`, strings are stored in `sstring<K>`.
+
+## Generated documentation
+[Located here](https://orefkov.github.io/simjson/docs_en/)
 
 ## Key features of the library
 - Works with all simstr strings.
@@ -180,6 +183,3 @@ void read_config_from_file(ssa folder, ssa file_name) {
     EXPECT_EQ(json2.store(false, true), "{\"four\":4,\"one\":1,\"three\":3,\"two\":2}");
 
 ```
-
-## Generated documentation
-[Located here](https://snegopat.ru/simjson/docs/en/)

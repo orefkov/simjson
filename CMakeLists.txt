@@ -1,11 +1,12 @@
 ﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 include(cmake/prelude.cmake)
 include(CMakeDependentOption)
 include(FetchContent)
 
 project(
     simjson
-    VERSION 1.2.3
+    VERSION 1.2.4
     DESCRIPTION "Very simple json library"
     HOMEPAGE_URL "https://github.com/orefkov/simjson"
     LANGUAGES CXX
@@ -67,8 +68,8 @@ function(add_simstr)
         simstr
         GIT_REPOSITORY https://github.com/orefkov/simstr.git
         GIT_SHALLOW TRUE
-        GIT_TAG tags/rel1.2.6
-        FIND_PACKAGE_ARGS NAMES simstr
+        GIT_TAG tags/rel1.6.5
+        FIND_PACKAGE_ARGS NAMES "simstr 1.6.5"
     )
     FetchContent_MakeAvailable(simstr)
 endfunction()

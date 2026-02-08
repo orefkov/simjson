@@ -363,9 +363,9 @@ SIMJSON_API typename JsonValueTempl<K>::strType JsonValueTempl<K>::to_text() con
         return e_num<K>(val_.integer);
     case Real:
         if constexpr (is_one_of_std_char_v<K>) {
-            return e_real<K>(val_.real);
+            return e_num<K>(val_.real);
         } else {
-            return lstringa<64>{e_real<u8s>(val_.real)};
+            return lstringa<64>{e_num<u8s>(val_.real)};
         }
     default:
         return {};
