@@ -1,4 +1,4 @@
-/*
+﻿/*
  * (c) Проект "SimJson", Александр Орефков orefkov@gmail.com
  * ver. 1.0
  * Классы для работы с JSON
@@ -96,7 +96,7 @@ concept JsonType = std::is_integral_v<std::remove_cvref_t<T>> ||
     std::is_constructible_v<sstring<K>, T>;
 
 template<typename T, typename K>
-concept JsonKeyType = std::convertible_to<T, simple_str<K>> ||
+concept JsonKeyType = std::convertible_to<T, str_src<K>> ||
     std::same_as<std::remove_cvref_t<T>, KeyType<K>>;
 
 template<typename T, typename K>
