@@ -6,7 +6,7 @@ include(FetchContent)
 
 project(
     simjson
-    VERSION 1.2.4
+    VERSION 1.2.5
     DESCRIPTION "Very simple json library"
     HOMEPAGE_URL "https://github.com/orefkov/simjson"
     LANGUAGES CXX
